@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETF 총보수 비교 계산기 · 똑재TV</title>
+<meta name="description" content="연 비용 0.5%와 0.05%, 20~30년 적립하면 얼마나 차이 날까요? 두 ETF의 총보수·실부담비용률을 넣으면 연차별 평가액과 비용으로 빠져나간 돈을 원 단위로 계산합니다.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<style>
+  :root {
+    --bg: #F5EFE6;
+    --bg-alt: #EFE7DA;
+    --ink: #1A1A1A;
+    --ink-soft: #4A4A4A;
+    --ink-mute: #8B8276;
+    --accent: #D9542B;
+    --accent-soft: #F4D5C4;
+    --border: #E5DCC8;
+    --white: #FBF7F0;
+    --brown: #8B6F47;
+    --beige-gold: #C4A57B;
+    --dark-warm: #3A2F26;
+    --dark-warm-soft: #5A4A3D;
+    --green: #4A5A4A;
+    --blue: #2E5E8A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 32px 24px;
+    font-weight: 600;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  /* 헤더 */
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 40px; height: 40px; background: var(--dark-warm); color: var(--white);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 20px;
+  }
+  .logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; }
+  .logo-sub { font-size: 10px; color: var(--ink-mute); font-weight: 700; letter-spacing: 1px; }
+
+  /* 히어로 */
+  .hero { margin-bottom: 32px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--white); border: 1.5px solid var(--accent); color: var(--accent);
+    padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+    margin-bottom: 20px;
+  }
+  .tag .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+  .hero-title { font-size: 64px; font-weight: 900; letter-spacing: -2.5px; line-height: 1.05; margin-bottom: 20px; }
+  .underline-mark { background: linear-gradient(transparent 60%, var(--accent-soft) 60%); padding: 0 4px; }
+  .hero-desc { font-size: 17px; color: var(--ink-soft); font-weight: 500; line-height: 1.7; }
+
+  /* 상단 CTA */
+  .top-cta {
+    background: var(--bg-alt); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 24px; margin-bottom: 32px;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .top-cta-text { font-size: 14px; color: var(--ink-soft); font-weight: 600; }
+  .top-cta-links { display: flex; gap: 8px; flex-wrap: wrap; }
+  .top-cta-link {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 700; text-decoration: none;
+    background: var(--white); border: 1.5px solid var(--border); color: var(--ink);
+  }
+  .top-cta-link.primary { background: var(--accent); color: var(--white); border-color: var(--accent); }
+  .naver-mark {
+    display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
+    background: #03C75A; color: #FFFFFF; font-weight: 900; font-size: 11px; border-radius: 3px;
+    line-height: 1; letter-spacing: -0.5px; flex-shrink: 0;
+  }
+
+  /* 카드 / 스텝 */
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 28px; margin-bottom: 32px; }
+  .step-label { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .step-line { width: 28px; height: 2px; background: var(--accent); }
+  .step-text { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent); }
+  .card-title { font-size: 24px; font-weight: 900; letter-spacing: -0.6px; margin-bottom: 6px; }
+  .card-subtitle { font-size: 14px; color: var(--ink-mute); font-weight: 500; margin-bottom: 22px; line-height: 1.6; }
+
+  /* 입력 */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .input-group { margin-bottom: 18px; }
+  .input-group:last-child { margin-bottom: 0; }
+  .label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--ink-soft); margin-bottom: 8px; }
+  input[type=number], select {
+    background: var(--white); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-family: inherit; font-size: 16px; color: var(--ink); font-weight: 700;
+    transition: all 0.15s ease; width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .input-hint { font-size: 12px; color: var(--ink-mute); font-weight: 600; margin-top: 6px; }
+  .input-wrap { position: relative; }
+  .input-wrap input { padding-right: 130px; }
+  /* 숫자 바로 뒤에 붙는 단위 (만원·년·%) — 위치는 JS가 글자 폭을 재서 맞춘다 */
+  .input-unit { position: absolute; top: 50%; transform: translateY(-50%); left: 0; pointer-events: none;
+    font-size: 15px; font-weight: 700; color: var(--ink-mute); white-space: nowrap; visibility: hidden; }
+  .input-currency {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 800;
+    padding: 5px 10px; border-radius: 6px; pointer-events: none; letter-spacing: -0.3px;
+    white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .input-currency.empty { background: transparent; color: var(--ink-mute); font-weight: 600; }
+  .sub-card { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  .sub-card-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; letter-spacing: -0.3px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    background: var(--white); border: 1.5px solid var(--border); color: var(--ink-soft);
+    border-radius: 999px; padding: 5px 12px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: var(--white); }
+  .fixed-note {
+    background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 12px 14px;
+    font-size: 13.5px; font-weight: 700; line-height: 1.55;
+  }
+
+  /* 토글 */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .toggle-text-title { font-size: 15px; font-weight: 800; }
+  .toggle-text-desc { font-size: 13px; color: var(--ink-mute); font-weight: 500; margin-top: 2px; }
+  .toggle-switch { position: relative; display: inline-block; width: 56px; height: 30px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #C4B8A3; transition: 0.25s; border-radius: 30px; }
+  .toggle-slider:before {
+    position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px;
+    background: var(--white); transition: 0.25s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(26px); }
+
+  /* 결과 */
+  .verdict {
+    background: var(--dark-warm); color: var(--white); border-radius: 20px; padding: 30px 32px; margin-bottom: 20px;
+  }
+  .verdict-label { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent-soft); margin-bottom: 10px; }
+  .verdict-main { font-size: 30px; font-weight: 900; letter-spacing: -0.8px; line-height: 1.3; }
+  .verdict-main .hl { color: #FFB38F; }
+  .verdict-sub { font-size: 15px; color: #D9D2C5; font-weight: 500; margin-top: 12px; line-height: 1.7; }
+  .verdict-sub strong { color: var(--white); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
+  .stat-card.accent { background: var(--accent); border-color: var(--accent); color: var(--white); }
+  .stat-card.accent .stat-label, .stat-card.accent .stat-sub { color: #FDE3D6; }
+  .stat-card.accent-blue { background: var(--blue); border-color: var(--blue); color: var(--white); }
+  .stat-card.accent-blue .stat-label, .stat-card.accent-blue .stat-sub { color: #C9D8E6; }
+  .stat-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--ink-mute); margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 900; letter-spacing: -1px; line-height: 1.15; }
+  .stat-sub { font-size: 13px; color: var(--ink-mute); margin-top: 6px; font-weight: 500; line-height: 1.5; }
+
+  .chart-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .chart-subtitle { font-size: 13px; color: var(--ink-mute); font-weight: 500; margin-bottom: 18px; line-height: 1.6; }
+  .chart-container { position: relative; height: 360px; width: 100%; }
+  .chart-container.sm { height: 300px; }
+
+  /* 표 */
+  .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 12px; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
+  .data-table th {
+    background: var(--bg-alt); padding: 12px 10px; text-align: right; font-weight: 700; color: var(--ink-soft);
+    font-size: 11.5px; border-bottom: 1.5px solid var(--border); white-space: nowrap;
+  }
+  .data-table th:first-child { text-align: center; }
+  .data-table td {
+    padding: 11px 10px; text-align: right; border-bottom: 1px solid var(--border);
+    font-weight: 600; color: var(--ink); white-space: nowrap;
+  }
+  .data-table td:first-child { text-align: center; font-weight: 800; color: var(--accent); }
+  .data-table tbody tr:hover { background: var(--bg-alt); }
+  .data-table .highlight-row { background: var(--accent-soft); }
+  .data-table .highlight-row td { font-weight: 800; }
+  .data-table td.c-accent { color: var(--accent); font-weight: 800; }
+  .data-table td.c-brown { color: var(--brown); }
+  .data-table td.c-blue { color: var(--blue); }
+  .scen-table { min-width: 560px; }
+  .tag-mini {
+    display: inline-block; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px;
+    background: var(--accent); color: var(--white); margin-left: 6px; vertical-align: 1px;
+  }
+
+  /* 인사이트 */
+  .insight-box { background: var(--dark-warm); color: var(--white); border-radius: 20px; padding: 36px; margin-bottom: 24px; }
+  .insight-label { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .insight-label-text { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent-soft); }
+  .insight-title { font-size: 24px; font-weight: 900; margin-bottom: 16px; letter-spacing: -0.5px; line-height: 1.35; }
+  .insight-desc { font-size: 15px; line-height: 1.75; color: #D9D2C5; font-weight: 500; }
+  .insight-desc + .insight-desc { margin-top: 12px; }
+  .insight-desc strong { color: var(--white); }
+  .insight-cta {
+    margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.12);
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  }
+  .insight-cta-text { font-size: 14px; color: #D9D2C5; font-weight: 600; margin-right: 8px; }
+  .cta-link {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 700; text-decoration: none; transition: all 0.2s ease; letter-spacing: -0.2px;
+  }
+  .cta-link.primary { background: var(--accent); color: var(--white); }
+  .cta-link.primary:hover { background: #E66740; transform: translateY(-1px); }
+  .cta-link.secondary { background: rgba(255,255,255,0.08); color: var(--white); border: 1px solid rgba(255,255,255,0.15); }
+  .cta-link.secondary:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+
+  .link-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .btn {
+    background: var(--dark-warm); color: var(--white); border: none; padding: 11px 18px; border-radius: 12px;
+    font-family: inherit; font-weight: 700; cursor: pointer; transition: all 0.15s ease; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  }
+  .btn:hover { background: var(--accent); }
+
+  .hub-back { display: inline-block; font-size: 13px; color: var(--ink-mute); font-weight: 600; text-decoration: none; margin-bottom: 12px; }
+  .hub-back:hover { color: var(--accent); }
+  footer { text-align: center; font-size: 12.5px; color: var(--ink-mute); font-weight: 500; line-height: 1.8; padding: 24px 0 8px; }
+
+  /* 계산 가정 */
+  .assume-list { list-style: none; display: grid; gap: 8px; }
+  .assume-list li { font-size: 13.5px; color: var(--ink-soft); font-weight: 600; line-height: 1.6; padding-left: 16px; position: relative; }
+  .assume-list li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 6px; height: 6px; border-radius: 50%; background: var(--beige-gold); }
+
+  @media (max-width: 1100px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    body { padding: 16px 12px; }
+    header { margin-bottom: 24px; }
+    .card { padding: 18px 16px !important; margin-bottom: 20px !important; border-radius: 16px !important; }
+    .hero-title { font-size: 34px !important; letter-spacing: -1.2px !important; line-height: 1.18 !important; }
+    .hero-desc { font-size: 15px; }
+    .hero-desc br { display: none; }
+    .top-cta { flex-direction: column; align-items: stretch; padding: 16px; }
+    .top-cta-links { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .top-cta-link { justify-content: center; }
+    .grid-2 { grid-template-columns: 1fr !important; gap: 14px !important; }
+    .sub-card { padding: 16px; }
+    .input-wrap input { padding-right: 112px; }
+    .input-currency { max-width: 96px; font-size: 12px; }
+    .card-title { font-size: 20px; }
+    .verdict { padding: 22px 18px; border-radius: 16px; }
+    .verdict-main { font-size: 22px; letter-spacing: -0.5px; }
+    .verdict-sub { font-size: 14px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .stat-card { padding: 16px !important; border-radius: 14px !important; }
+    .stat-value { font-size: 21px !important; }
+    .stat-sub { font-size: 12px; }
+    .chart-title { font-size: 15px; line-height: 1.4; }
+    .chart-container { height: 280px !important; }
+    .chart-container.sm { height: 260px !important; }
+    .insight-box { padding: 24px 18px; border-radius: 16px; }
+    .insight-title { font-size: 19px !important; }
+    .insight-desc { font-size: 14.5px; }
+    .insight-cta { flex-direction: column; align-items: stretch; }
+    .cta-link { justify-content: center; }
+    .table-wrap { margin: 16px -16px 0; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+    .data-table { font-size: 11.5px; min-width: 640px; }
+    .scen-table { min-width: 480px; }
+    .data-table th { padding: 8px 6px; font-size: 10.5px; }
+    .data-table td { padding: 8px 6px; }
+    .link-row .btn { width: 100%; justify-content: center; }
+  }
+  @media (max-width: 380px) {
+    .hero-title { font-size: 29px !important; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .top-cta-links { grid-template-columns: 1fr !important; }
+  }
+
+  /* 표 내려받기 (CSV·엑셀) */
+  .dl-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; }
+  .dl-btn { font-family: inherit; font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--accent, #D9542B); background: #FBF7F0; color: var(--accent, #D9542B); cursor: pointer; line-height: 1.2; }
+  .dl-btn:hover { background: var(--accent, #D9542B); color: #fff; }
+  .dl-note { font-size: 12px; color: #8B7B6B; font-weight: 600; word-break: keep-all; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <a href="https://ttokjaetv.github.io/" class="hub-back">← 똑재TV 계산기 모음</a>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">똑</div>
+      <div>
+        <div class="logo-name">똑재TV</div>
+        <div class="logo-sub">ETF FEE CALCULATOR</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <span class="tag"><span class="dot"></span>ETF 총보수 비교 계산기</span>
+    <h1 class="hero-title">
+      보수 0.5%와 0.05%,<br>
+      <span class="underline-mark">20년 뒤엔 얼마 차이</span>일까?
+    </h1>
+    <p class="hero-desc">
+      같은 지수를 따라가는 ETF라도 해마다 떼어 가는 비용은 제각각입니다. 1년에 0.45%p, 별것 아닌 것 같죠?<br>
+      매달 적립하면서 20~30년 쌓이면 얼마가 되는지, 원 단위까지 직접 계산해 보세요.
+    </p>
+  </div>
+
+  <div class="top-cta">
+    <div class="top-cta-text">💡 <strong>같은 지수 ETF, 무엇을 보고 고를지</strong> 궁금하신가요? 똑재TV에서 매주 만나보세요.</div>
+    <div class="top-cta-links">
+      <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="top-cta-link primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        똑재TV 구독하기
+      </a>
+      <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="top-cta-link">
+        <span class="naver-mark">N</span>
+        평생 ETF 투자 카페
+      </a>
+    </div>
+  </div>
+
+  <!-- STEP 01 : 투자 조건 -->
+  <div class="card">
+    <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 01 / 투자 조건</span></div>
+    <h2 class="card-title">얼마를, 몇 년 동안 넣으시나요?</h2>
+    <p class="card-subtitle">금액은 모두 <strong>만원 단위</strong>입니다. 두 상품 모두 똑같은 돈을 똑같은 기간 넣는다고 보고 비교합니다.</p>
+
+    <div class="grid-2" style="align-items:stretch;">
+      <div class="sub-card">
+        <div class="sub-card-title">넣는 돈</div>
+        <div class="input-group">
+          <label class="label" for="initial">초기 투자금 (처음 한 번에 넣는 돈)</label>
+          <div class="input-wrap">
+            <input type="number" id="initial" data-unit="만원" value="0" step="100" min="0">
+            <span class="input-currency empty" id="initial-display">0원</span>
+          </div>
+          <div class="chips" data-target="initial">
+            <button class="chip" data-v="0">없음</button>
+            <button class="chip" data-v="1000">1,000만</button>
+            <button class="chip" data-v="5000">5,000만</button>
+            <button class="chip" data-v="10000">1억</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="monthly">월 적립액</label>
+          <div class="input-wrap">
+            <input type="number" id="monthly" data-unit="만원" value="50" step="10" min="0">
+            <span class="input-currency" id="monthly-display">월 50만원</span>
+          </div>
+          <div class="chips" data-target="monthly">
+            <button class="chip" data-v="30">30만</button>
+            <button class="chip" data-v="50">50만</button>
+            <button class="chip" data-v="100">100만</button>
+            <button class="chip" data-v="150">150만</button>
+          </div>
+          <div class="input-hint">매달 말에 넣는다고 계산합니다</div>
+        </div>
+      </div>
+
+      <div class="sub-card">
+        <div class="sub-card-title">기간과 수익률</div>
+        <div class="input-group">
+          <label class="label" for="years">투자 기간</label>
+          <div class="input-wrap">
+            <input type="number" id="years" data-unit="년" value="20" step="1" min="1" max="50">
+            <span class="input-currency" id="years-display">20년</span>
+          </div>
+          <div class="chips" data-target="years">
+            <button class="chip" data-v="10">10년</button>
+            <button class="chip" data-v="20">20년</button>
+            <button class="chip" data-v="30">30년</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="label" for="rate">연 수익률 (세전, 비용 빼기 전)</label>
+          <div class="input-wrap">
+            <input type="number" id="rate" data-unit="%" value="7" step="any" min="-5" max="20">
+            <span class="input-currency" id="rate-display">연 7.0%</span>
+          </div>
+          <div class="chips" data-target="rate">
+            <button class="chip" data-v="5">5%</button>
+            <button class="chip" data-v="7">7%</button>
+            <button class="chip" data-v="9">9%</button>
+          </div>
+          <div class="input-hint">두 상품이 따라가는 지수 자체의 수익률입니다. 여기서 각 상품의 비용을 빼서 계산합니다</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 02 : 비용 -->
+  <div class="card">
+    <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 02 / 두 상품의 연 비용</span></div>
+    <h2 class="card-title">비교할 두 상품의 비용을 넣으세요</h2>
+    <p class="card-subtitle">총보수보다 <strong>실부담비용률</strong>을 넣으면 더 정확합니다. 실부담비용률은 총보수·비용비율(TER, 총보수 + 기타비용)에 매매·중개수수료율까지 더한 값이에요. 운용사 홈페이지 상품 페이지나 금융투자협회 전자공시(펀드 공시)에서 확인할 수 있습니다.</p>
+
+    <div class="grid-2" style="align-items:stretch;">
+      <div class="sub-card">
+        <div class="sub-card-title">상품 A</div>
+        <div class="input-group">
+          <label class="label" for="feeA">상품 A 연 비용 (%)</label>
+          <div class="input-wrap">
+            <input type="number" id="feeA" data-unit="%" value="0.50" step="0.01" min="0" max="5">
+            <span class="input-currency" id="feeA-display">연 0.50%</span>
+          </div>
+          <div class="chips" data-target="feeA">
+            <button class="chip" data-v="0.05">0.05%</button>
+            <button class="chip" data-v="0.15">0.15%</button>
+            <button class="chip" data-v="0.3">0.30%</button>
+            <button class="chip" data-v="0.5">0.50%</button>
+            <button class="chip" data-v="1">1.00%</button>
+          </div>
+        </div>
+      </div>
+      <div class="sub-card">
+        <div class="sub-card-title">상품 B</div>
+        <div class="input-group">
+          <label class="label" for="feeB">상품 B 연 비용 (%)</label>
+          <div class="input-wrap">
+            <input type="number" id="feeB" data-unit="%" value="0.05" step="0.01" min="0" max="5">
+            <span class="input-currency" id="feeB-display">연 0.05%</span>
+          </div>
+          <div class="chips" data-target="feeB">
+            <button class="chip" data-v="0.05">0.05%</button>
+            <button class="chip" data-v="0.15">0.15%</button>
+            <button class="chip" data-v="0.3">0.30%</button>
+            <button class="chip" data-v="0.5">0.50%</button>
+            <button class="chip" data-v="1">1.00%</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fixed-note" id="growth-note" style="margin-top:20px;">-</div>
+
+    <div class="sub-card" style="margin-top:20px;">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-text-title">'비용 0%' 기준선 함께 보기</div>
+          <div class="toggle-text-desc">비용이 하나도 없었다면 얼마였을지 차트에 점선으로 그립니다</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="base-on" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 03 : 결과 -->
+  <div class="step-label"><div class="step-line"></div><span class="step-text">STEP 03 / 결과</span></div>
+  <div class="verdict" id="verdict">
+    <div class="verdict-label" id="verdict-label">RESULT</div>
+    <div class="verdict-main" id="verdict-main">-</div>
+    <div class="verdict-sub" id="verdict-sub"></div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label" id="s1-label">-</div><div class="stat-value" id="s1-value">-</div><div class="stat-sub" id="s1-sub"></div></div>
+    <div class="stat-card"><div class="stat-label" id="s2-label">-</div><div class="stat-value" id="s2-value">-</div><div class="stat-sub" id="s2-sub"></div></div>
+    <div class="stat-card accent"><div class="stat-label" id="s3-label">-</div><div class="stat-value" id="s3-value">-</div><div class="stat-sub" id="s3-sub"></div></div>
+    <div class="stat-card accent-blue"><div class="stat-label" id="s4-label">-</div><div class="stat-value" id="s4-value">-</div><div class="stat-sub" id="s4-sub"></div></div>
+  </div>
+
+  <div class="card">
+    <h3 class="chart-title">연차별 평가액, 두 선이 벌어지는 모습</h3>
+    <p class="chart-subtitle" id="growth-subtitle">-</p>
+    <div class="chart-container"><canvas id="growth-chart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="step-label"><div class="step-line"></div><span class="step-text">기간별 비교</span></div>
+    <h3 class="chart-title">10년·20년·30년, 기간이 길어지면?</h3>
+    <p class="chart-subtitle" id="period-subtitle">-</p>
+    <div class="chart-container sm"><canvas id="period-chart"></canvas></div>
+    <div class="table-wrap">
+      <table class="data-table scen-table">
+        <thead id="period-head"></thead>
+        <tbody id="period-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="chart-title">연차별 상세 데이터</h3>
+    <p class="chart-subtitle" id="table-subtitle">-</p>
+    <div class="dl-bar">
+      <button type="button" class="dl-btn" id="dl-csv">CSV 내려받기</button>
+      <button type="button" class="dl-btn" id="dl-xlsx">엑셀(.xlsx) 내려받기</button>
+      <span class="dl-note">표에 보이는 연차별 값이 그대로 들어갑니다 (원 단위 숫자 · 세전)</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead id="year-head"></thead>
+        <tbody id="year-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="chart-title">계산은 이렇게 했습니다</h3>
+    <p class="chart-subtitle">숫자를 해석하실 때 아래 가정을 같이 봐 주세요.</p>
+    <ul class="assume-list">
+      <li><b>비용은 매년 수익률에서 차감</b>합니다. 연 성장 배수 = (1 + 연 수익률) × (1 − 연 비용률). 실제 ETF도 보수가 매일 조금씩 빠져 기준가에 이미 반영됩니다.</li>
+      <li>월 수익률 = 연 성장 배수의 12제곱근 − 1 로 계산합니다(연 수익률 ÷ 12가 아닙니다). 적립은 <b>매달 말</b>, 초기 투자금은 첫날에 넣습니다.</li>
+      <li><b>수익률은 매년 일정</b>하다고 가정합니다. 실제 시장은 해마다 오르내리고, 그 순서에 따라 결과가 달라질 수 있습니다.</li>
+      <li><b>세금·환율·매매 수수료(증권사 거래 수수료)는 반영하지 않았습니다.</b> 추적오차(지수와 ETF 수익률의 차이)도 비용 외에는 따로 넣지 않았습니다.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="link-row">
+      <div>
+        <h3 class="chart-title">이 조건 그대로 공유하기</h3>
+        <p class="chart-subtitle" style="margin-bottom:0;">입력한 값이 담긴 주소를 복사합니다. 카페 글이나 메모에 붙여넣으면 같은 화면이 열립니다.</p>
+      </div>
+      <button class="btn" id="copy-link">링크 복사</button>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <div class="insight-label">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9542B" stroke-width="2"><path d="M12 3l1.9 5.8L20 10l-4.5 3.3L17 20l-5-3.5L7 20l1.5-6.7L4 10l6.1-1.2L12 3z"/></svg>
+      <span class="insight-label-text">KEY INSIGHT</span>
+    </div>
+    <h3 class="insight-title" id="insight-title">-</h3>
+    <p class="insight-desc" id="insight-desc1">-</p>
+    <p class="insight-desc" id="insight-desc2"></p>
+    <div class="insight-cta">
+      <div class="insight-cta-text">📊 같은 지수를 따라가는 ETF라면, 비용은 내가 고를 수 있는 몇 안 되는 숫자입니다.</div>
+      <a href="https://www.youtube.com/@ttok_jae" target="_blank" rel="noopener" class="cta-link primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        똑재TV 구독하기
+      </a>
+      <a href="https://cafe.naver.com/ttokjae" target="_blank" rel="noopener" class="cta-link secondary">
+        <span class="naver-mark">N</span>
+        평생 ETF 투자 카페 가입
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    ※ 본 계산기는 세전 기준의 단순 계산 도구입니다. 입력한 연 비용률이 매년 수익률에서 빠진다고 가정했고, 세금·환율·매매 수수료는 반영하지 않았습니다.<br>
+    수익률은 매년 일정하다고 가정하므로 실제 투자 결과와 차이가 있을 수 있습니다. 특정 상품의 매수·매도 권유가 아닙니다.<br>
+    🔒 입력한 숫자는 이 브라우저 안에서만 계산되며, 서버로 보내거나 따로 저장하지 않습니다.
+  </footer>
+</div>
+
+<script>
+// ============== 표 내려받기 (CSV · 엑셀 .xlsx) — 외부 라이브러리 없이 동작 ==============
+// TJX.csv('파일이름', rows) · TJX.xlsx('파일이름', [{ name: '시트', rows, widths }])
+// rows = [[머리글...], [값...], ...]  숫자는 숫자 그대로 넣으면 엑셀에서 계산 가능한 숫자 칸이 됩니다
+const TJX = (() => {
+  const enc = new TextEncoder();
+  function csvText(rows) {
+    return '﻿' + rows.map(r => r.map(v => {
+      if (v == null) return '';
+      if (typeof v === 'number') return isFinite(v) ? String(Math.round(v * 100) / 100) : '';
+      const t = String(v);
+      return /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+    }).join(',')).join('\r\n');
+  }
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function zipStore(files) {   // 압축 없이 묶기 (엑셀은 이 형식도 그대로 엽니다)
+    const parts = [], central = []; let off = 0;
+    for (const f of files) {
+      const nm = enc.encode(f.name), d = enc.encode(f.text), c = crc32(d);
+      const lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+      lh.setUint16(12, 0x21, true); lh.setUint32(14, c, true); lh.setUint32(18, d.length, true); lh.setUint32(22, d.length, true);
+      lh.setUint16(26, nm.length, true);
+      parts.push(new Uint8Array(lh.buffer), nm, d);
+      const ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+      ch.setUint16(14, 0x21, true); ch.setUint32(16, c, true); ch.setUint32(20, d.length, true); ch.setUint32(24, d.length, true);
+      ch.setUint16(28, nm.length, true); ch.setUint32(42, off, true);
+      central.push(new Uint8Array(ch.buffer), nm);
+      off += 30 + nm.length + d.length;
+    }
+    const cs = central.reduce((s, a) => s + a.length, 0);
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cs, true); end.setUint32(16, off, true);
+    return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const colName = i => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  function sheetXml(sh) {
+    const rows = sh.rows || [];
+    const nCol = rows.reduce((m, r) => Math.max(m, r.length), 1);
+    const widths = sh.widths || [];
+    const cols = Array.from({ length: nCol }, (_, i) => `<col min="${i + 1}" max="${i + 1}" width="${widths[i] || (i === 0 ? 12 : 16)}" customWidth="1"/>`).join('');
+    const body = rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) => {
+      const ref = colName(ci) + (ri + 1);
+      if (v == null || v === '') return '';
+      if (typeof v === 'number' && isFinite(v)) {
+        const st = ri === 0 ? 2 : (Math.abs(v - Math.round(v)) < 1e-9 ? 1 : 3);
+        return `<c r="${ref}" s="${st}"><v>${Math.round(v * 10000) / 10000}</v></c>`;
+      }
+      return `<c r="${ref}" t="inlineStr"${ri === 0 ? ' s="2"' : ''}><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+    }).join('') + '</row>').join('');
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${cols}</cols><sheetData>${body}</sheetData></worksheet>`;
+  }
+  function xlsxBlob(sheets) {
+    const W = 'http://schemas.openxmlformats.org';
+    const files = [
+      { name: '[Content_Types].xml', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="${W}/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>` },
+      { name: '_rels/.rels', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${W}/package/2006/relationships"><Relationship Id="rId1" Type="${W}/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+      { name: 'xl/workbook.xml', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${W}/spreadsheetml/2006/main" xmlns:r="${W}/officeDocument/2006/relationships"><sheets>${sheets.map((s, i) => `<sheet name="${esc(String(s.name || 'Sheet' + (i + 1)).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31))}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>` },
+      { name: 'xl/_rels/workbook.xml.rels', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${W}/package/2006/relationships">${sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="${W}/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${sheets.length + 1}" Type="${W}/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
+      { name: 'xl/styles.xml', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${W}/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="3" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>` },
+      ...sheets.map((s, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, text: sheetXml(s) })),
+    ];
+    return zipStore(files);
+  }
+  function save(blob, name) {
+    const a = document.createElement('a'), u = URL.createObjectURL(blob);
+    a.href = u; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(u); a.remove(); }, 1500);
+  }
+  const stamp = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
+  return {
+    csvText, xlsxBlob,
+    csv(name, rows) { save(new Blob([csvText(rows)], { type: 'text/csv;charset=utf-8' }), `${name}_${stamp()}.csv`); },
+    xlsx(name, sheets) { save(xlsxBlob(sheets), `${name}_${stamp()}.xlsx`); },
+  };
+})();
+// ============== 포맷 ==============
+function formatKRW(n) {
+  const neg = n < 0; n = Math.abs(n);
+  let s;
+  if (n >= 100000000) {
+    const eok = n / 100000000;
+    s = (eok >= 100 ? Math.round(eok).toLocaleString() : eok.toFixed(2)) + '억';
+  } else if (n >= 10000) s = Math.round(n / 10000).toLocaleString() + '만';
+  else s = Math.round(n).toLocaleString();
+  return (neg ? '-' : '') + s;
+}
+function formatKRWFull(n) { return Math.round(n).toLocaleString() + '원'; }
+// 만원 입력값 → "5억원", "3억 2,000만원", "3,000만원"
+function formatManwon(m) {
+  m = Math.round(Number(m) || 0);
+  if (m <= 0) return '0원';
+  const eok = Math.floor(m / 10000), man = m % 10000;
+  if (eok && man) return eok.toLocaleString() + '억 ' + man.toLocaleString() + '만원';
+  if (eok) return eok.toLocaleString() + '억원';
+  return man.toLocaleString() + '만원';
+}
+// 원 → 결과 카드 표기 "2억 3,887만원" (10만원 미만이면 원 단위 그대로)
+function formatWonCard(won) {
+  const neg = won < 0, a = Math.abs(won);
+  if (a < 100000) return (neg ? '-' : '') + Math.round(a).toLocaleString() + '원';
+  return (neg ? '-' : '') + formatManwon(Math.round(a / 10000));
+}
+const pct = (v, d = 1) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d) + '%';
+const rateFix = v => { const r2 = Math.round(v * 100) / 100; return Math.abs(r2 * 10 - Math.round(r2 * 10)) < 1e-9 ? r2.toFixed(1) : r2.toFixed(2); };
+const ratePct = v => rateFix(v) + '%';
+const feePct = v => (Math.round(v * 100) / 100).toFixed(2) + '%';   // 비용률은 소수 2자리
+
+// ============== 입력 ==============
+const PERIODS = [10, 20, 30];
+let growthChart = null, periodChart = null;
+
+function readInputs() {
+  const num = (id, d) => { const v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : d; };
+  return {
+    initial: Math.max(0, num('initial', 0)) * 10000,
+    monthly: Math.max(0, num('monthly', 0)) * 10000,
+    years: Math.max(1, Math.min(50, Math.round(num('years', 20)))),
+    rate: Math.max(-5, Math.min(20, num('rate', 7))) / 100,
+    feeA: Math.max(0, Math.min(5, num('feeA', 0.5))) / 100,
+    feeB: Math.max(0, Math.min(5, num('feeB', 0.05))) / 100,
+    baseOn: document.getElementById('base-on').checked,
+  };
+}
+
+// ============== 계산 엔진 ==============
+// 연 성장 배수 = (1 + 연 수익률) × (1 − 연 비용률)
+// 월 수익률 = 연 성장 배수^(1/12) − 1  (연 ÷ 12 아님) · 매달 말 적립 · 초기 투자금은 0시점 투입
+const growthFactor = (R, fee) => (1 + R) * (1 - fee);
+const monthlyRate = (R, fee) => Math.pow(growthFactor(R, fee), 1 / 12) - 1;
+
+// 연차별 경로: [{year, principal, a, b, zero}]  (year 0 = 시작)
+function simulate(inp, years = inp.years) {
+  const rA = monthlyRate(inp.rate, inp.feeA), rB = monthlyRate(inp.rate, inp.feeB), r0 = monthlyRate(inp.rate, 0);
+  let a = inp.initial, b = inp.initial, z = inp.initial, pr = inp.initial;
+  const rows = [{ year: 0, principal: pr, a, b, zero: z }];
+  for (let m = 1; m <= years * 12; m++) {
+    a = a * (1 + rA) + inp.monthly;
+    b = b * (1 + rB) + inp.monthly;
+    z = z * (1 + r0) + inp.monthly;
+    pr += inp.monthly;
+    if (m % 12 === 0) rows.push({ year: m / 12, principal: pr, a, b, zero: z });
+  }
+  return rows;
+}
+window.feeCalc = { simulate, readInputs, growthFactor, monthlyRate };   // 검증용
+
+// ============== 렌더 ==============
+function setStat(i, label, value, sub) {
+  document.getElementById('s' + i + '-label').textContent = label;
+  document.getElementById('s' + i + '-value').textContent = value;
+  document.getElementById('s' + i + '-sub').innerHTML = sub || '';
+}
+
+let lastExport = null;
+
+function render() {
+  const inp = readInputs();
+  const path = simulate(inp);
+  const last = path[path.length - 1];
+  const Y = inp.years;
+  const diff = last.b - last.a;               // B − A
+  const absDiff = Math.abs(diff);
+  const lostA = last.zero - last.a, lostB = last.zero - last.b;
+  const aT = feePct(inp.feeA * 100), bT = feePct(inp.feeB * 100);
+  const gapP = Math.abs(inp.feeA - inp.feeB) * 100;   // %p
+  const hiName = inp.feeA > inp.feeB ? 'A' : 'B', loName = hiName === 'A' ? 'B' : 'A';
+  const hiVal = hiName === 'A' ? last.a : last.b, loVal = hiName === 'A' ? last.b : last.a;
+
+  // 연 성장 배수 안내
+  const gfA = growthFactor(inp.rate, inp.feeA), gfB = growthFactor(inp.rate, inp.feeB);
+  document.getElementById('growth-note').innerHTML =
+    `비용을 빼고 나면 실제로 불어나는 속도는 · 상품 A: (1 + ${ratePct(inp.rate * 100)}) × (1 − ${aT}) → <b>연 ${pct((gfA - 1) * 100, 2)}</b> · 상품 B: (1 + ${ratePct(inp.rate * 100)}) × (1 − ${bT}) → <b>연 ${pct((gfB - 1) * 100, 2)}</b>`;
+
+  // verdict
+  document.getElementById('verdict-label').textContent = `RESULT · ${Y}년 뒤`;
+  const vMain = document.getElementById('verdict-main'), vSub = document.getElementById('verdict-sub');
+  if (last.principal <= 0) {
+    vMain.textContent = '초기 투자금이나 월 적립액을 넣어 주세요';
+    vSub.textContent = '';
+  } else if (absDiff < 0.5) {
+    vMain.innerHTML = `${Y}년 뒤 두 상품 차이는 <span class="hl">0원</span>입니다`;
+    vSub.innerHTML = `두 상품의 연 비용이 같아서 결과도 같습니다. 비용을 다르게 넣어 비교해 보세요.`;
+  } else {
+    vMain.innerHTML = `${Y}년 뒤 두 상품 차이는<br><span class="hl">${formatWonCard(absDiff)}</span>입니다`;
+    vSub.innerHTML = `연 비용 차이는 ${pct(gapP, 2)}p뿐인데, 누적 원금 <strong>${formatWonCard(last.principal)}</strong>의 <strong>${pct(absDiff / last.principal * 100, 1)}</strong>에 해당하는 돈이 벌어졌습니다. ` +
+      `같은 돈을 넣고도 비용이 높은 상품 ${hiName}(연 ${hiName === 'A' ? aT : bT})는 상품 ${loName}보다 <strong>${pct(absDiff / loVal * 100, 1)} 적게</strong> 남습니다.`;
+  }
+
+  // 카드 4개
+  setStat(1, `상품 A 최종 평가액 · 연 ${aT}`, formatWonCard(last.a), `${formatKRWFull(last.a)}<br>원금의 ${(last.a / Math.max(1, last.principal)).toFixed(2)}배`);
+  setStat(2, `상품 B 최종 평가액 · 연 ${bT}`, formatWonCard(last.b), `${formatKRWFull(last.b)}<br>원금의 ${(last.b / Math.max(1, last.principal)).toFixed(2)}배`);
+  setStat(3, '두 상품 차이 (B − A)', formatWonCard(diff), `${formatKRWFull(diff)}<br>누적 원금 ${formatWonCard(last.principal)} 대비 ${pct(Math.abs(diff) / Math.max(1, last.principal) * 100, 1)}`);
+  setStat(4, 'A가 비용으로 잃은 돈 (비용 0% 대비)', formatWonCard(lostA), `비용 0%였다면 ${formatWonCard(last.zero)}<br>B는 ${formatWonCard(lostB)}`);
+
+  lastExport = { inp, path };
+  drawGrowth(inp, path);
+  renderPeriods(inp);
+  renderTable(inp, path);
+  renderInsight(inp, path);
+  syncUrl(inp);
+}
+
+// ============== 차트 ==============
+const CHART_FONT = "Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";   // 웹폰트가 늦게 떠도 명조로 그려지지 않게
+const chartCommonOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { labels: { font: { family: CHART_FONT, size: 13, weight: 600 }, color: '#1A1A1A', usePointStyle: true, padding: 16 } },
+    tooltip: {
+      backgroundColor: '#FBF7F0', titleColor: '#1A1A1A', bodyColor: '#3A2F26', borderColor: '#D9542B', borderWidth: 1.5,
+      padding: 14, titleFont: { family: CHART_FONT, size: 14, weight: 800 }, bodyFont: { family: CHART_FONT, size: 13, weight: 600 },
+      titleSpacing: 6, bodySpacing: 8, titleMarginBottom: 10, caretSize: 8, cornerRadius: 10, usePointStyle: true, boxPadding: 6,
+    }
+  }
+};
+
+const endLabelPlugin = {
+  id: 'endLabel',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    const labels = [];
+    chart.data.datasets.forEach((ds, i) => {
+      const meta = chart.getDatasetMeta(i);
+      if (meta.hidden) return;
+      const last = ds.data.length - 1;
+      const p = meta.data[last];
+      if (!p) return;
+      labels.push({ x: p.x, y: p.y, color: ds._endLabelColor || ds.borderColor, text: ds._short || ds.label, value: ds.data[last] });
+    });
+    labels.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 18) labels[i].y = labels[i - 1].y + 18;
+    const isMobile = window.innerWidth < 768;
+    labels.forEach(l => {
+      const fs = isMobile ? 10 : 11;
+      ctx.font = `700 ${fs}px Pretendard, sans-serif`;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      const text = `${l.text} ${formatKRW(l.value)}`;
+      const tw = ctx.measureText(text).width;
+      const padX = isMobile ? 6 : 8, padY = isMobile ? 3 : 4;
+      const bx = l.x + 6, bh = fs + padY * 2, by = l.y - bh / 2, bw = tw + padX * 2, r = 4;
+      ctx.fillStyle = '#FBF7F0'; ctx.strokeStyle = l.color; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') ctx.roundRect(bx, by, bw, bh, r); else ctx.rect(bx, by, bw, bh);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = l.color;
+      ctx.fillText(text, bx + padX, l.y);
+    });
+    ctx.restore();
+  }
+};
+
+function drawGrowth(inp, path) {
+  const labels = path.map(p => p.year === 0 ? '지금' : p.year + '년');
+  const isMobile = window.innerWidth < 768;
+  const aT = feePct(inp.feeA * 100), bT = feePct(inp.feeB * 100);
+  const ds = [
+    { label: `상품 B (연 ${bT})`, _short: isMobile ? 'B' : '상품 B', data: path.map(p => p.b), borderColor: '#D9542B', backgroundColor: 'rgba(217,84,43,0.08)', borderWidth: 3, fill: false, tension: 0.25, pointRadius: 0, pointHoverRadius: 5 },
+    { label: `상품 A (연 ${aT})`, _short: isMobile ? 'A' : '상품 A', data: path.map(p => p.a), borderColor: '#2E5E8A', borderWidth: 3, fill: false, tension: 0.25, pointRadius: 0, pointHoverRadius: 5 },
+  ];
+  if (inp.baseOn) ds.push({ label: '비용 0%', _short: isMobile ? '0%' : '비용 0%', data: path.map(p => p.zero), borderColor: '#3A2F26', borderWidth: 2, borderDash: [6, 4], fill: false, tension: 0.25, pointRadius: 0, pointHoverRadius: 4 });
+  ds.push({ label: '누적 원금', _short: '원금', data: path.map(p => p.principal), borderColor: '#9B9387', borderWidth: 2, borderDash: [3, 3], fill: false, tension: 0, pointRadius: 0, pointHoverRadius: 4 });
+
+  document.getElementById('growth-subtitle').textContent =
+    `주황 선은 상품 B(연 ${bT}), 파란 선은 상품 A(연 ${aT})입니다.` + (inp.baseOn ? ' 검은 점선은 비용이 0%였을 때, 회색 점선은 넣은 돈(누적 원금)입니다.' : ' 회색 점선은 넣은 돈(누적 원금)입니다.') +
+    ' 처음엔 거의 붙어 있다가 뒤로 갈수록 벌어지는 게 보이시죠?';
+
+  if (growthChart) growthChart.destroy();
+  growthChart = new Chart(document.getElementById('growth-chart'), {
+    type: 'line',
+    data: { labels, datasets: ds },
+    options: {
+      ...chartCommonOptions,
+      interaction: { mode: 'index', intersect: false },
+      layout: { padding: { right: isMobile ? 96 : 150, top: 10, bottom: 4, left: 4 } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: CHART_FONT, size: 11, weight: 600 }, color: '#8B8276', maxTicksLimit: isMobile ? 6 : 12 } },
+        y: { grid: { color: '#EFE7DA' }, ticks: { font: { family: CHART_FONT, size: 11, weight: 600 }, color: '#8B8276', callback: v => formatKRW(v) } },
+      },
+      plugins: {
+        ...chartCommonOptions.plugins,
+        legend: { display: false },
+        datalabels: { display: false },
+        tooltip: {
+          ...chartCommonOptions.plugins.tooltip, mode: 'index', intersect: false,
+          itemSort: (a, b) => b.parsed.y - a.parsed.y,
+          callbacks: {
+            label: c => '  ' + c.dataset.label + ': ' + formatKRWFull(c.parsed.y),
+            footer: items => {
+              const p = path[items[0].dataIndex];
+              return p ? `차이(B − A): ${formatKRWFull(p.b - p.a)}` : '';
+            },
+          },
+          footerColor: '#D9542B', footerFont: { family: CHART_FONT, size: 13, weight: 800 }, footerMarginTop: 10,
+        },
+      },
+    },
+    plugins: [endLabelPlugin],
+  });
+}
+
+// 기간 10·20·30년 (+ 입력 기간) — 같은 조건에서 기간만 바꿔 계산
+function renderPeriods(inp) {
+  const list = PERIODS.includes(inp.years) ? PERIODS.slice() : [...PERIODS, inp.years].sort((a, b) => a - b);
+  const maxY = Math.max(...list);
+  const full = simulate(inp, maxY);   // 같은 조건이라 기간만 다르면 경로가 같다
+  const rows = list.map(y => ({ y, p: full[y], mine: y === inp.years }));
+  const aT = feePct(inp.feeA * 100), bT = feePct(inp.feeB * 100);
+  document.getElementById('period-subtitle').textContent =
+    `월 적립액·초기 투자금·수익률은 그대로 두고 기간만 바꿨을 때 두 상품의 차이(B − A)입니다. 기간이 2배가 되면 차이는 2배보다 훨씬 커집니다.`;
+  document.getElementById('period-head').innerHTML =
+    `<tr><th>기간</th><th>상품 A (연 ${aT})</th><th>상품 B (연 ${bT})</th><th>차이 (B − A)</th><th>원금 대비</th></tr>`;
+  document.getElementById('period-body').innerHTML = rows.map(x => `<tr${x.mine ? ' class="highlight-row"' : ''}>
+      <td>${x.y}년${x.mine ? '<span class="tag-mini">입력값</span>' : ''}</td>
+      <td class="c-blue">${formatKRW(x.p.a)}</td>
+      <td>${formatKRW(x.p.b)}</td>
+      <td class="c-accent">${formatKRW(x.p.b - x.p.a)}</td>
+      <td>${x.p.principal > 0 ? pct((x.p.b - x.p.a) / x.p.principal * 100, 1) : '-'}</td></tr>`).join('');
+
+  const fmt = v => formatKRW(v) + '원';
+  if (periodChart) periodChart.destroy();
+  periodChart = new Chart(document.getElementById('period-chart'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(x => x.y + '년'),
+      datasets: [{
+        label: '차이 (B − A)', data: rows.map(x => x.p.b - x.p.a),
+        backgroundColor: rows.map(x => x.mine ? '#D9542B' : '#C4A57B'),
+        borderRadius: 8, maxBarThickness: 72,
+        datalabels: { display: true, anchor: 'end', align: 'top', color: '#3A2F26', font: { family: CHART_FONT, size: 12, weight: 800 }, formatter: fmt },
+      }],
+    },
+    options: {
+      ...chartCommonOptions,
+      layout: { padding: { top: 26 } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: CHART_FONT, size: 12, weight: 700 }, color: '#4A4A4A' } },
+        y: { beginAtZero: true, grid: { color: '#EFE7DA' }, ticks: { font: { family: CHART_FONT, size: 11, weight: 600 }, color: '#8B8276', callback: v => formatKRW(v) } },
+      },
+      plugins: {
+        ...chartCommonOptions.plugins,
+        legend: { display: false },
+        tooltip: { ...chartCommonOptions.plugins.tooltip, callbacks: { label: c => '  차이 (B − A): ' + formatKRWFull(c.parsed.y) } },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+
+// ===== 연차별 표 + 내려받기 (원 단위 숫자) =====
+function renderTable(inp, path) {
+  const aT = feePct(inp.feeA * 100), bT = feePct(inp.feeB * 100);
+  document.getElementById('table-subtitle').textContent =
+    `'비용으로 빠져나간 돈'은 비용 0%였을 때 평가액에서 각 상품 평가액을 뺀 값입니다. 낸 보수 자체에, 그 돈이 굴러서 벌었을 수익까지 합친 금액입니다.`;
+  document.getElementById('year-head').innerHTML = `<tr>
+      <th>연차</th><th>누적 원금</th><th>상품 A (연 ${aT})</th><th>상품 B (연 ${bT})</th><th>차이 (B − A)</th>
+      <th>비용 0% 평가액</th><th>A 비용으로 빠진 돈</th><th>B 비용으로 빠진 돈</th></tr>`;
+  document.getElementById('year-body').innerHTML = path.filter(p => p.year > 0).map(p => `<tr${p.year === inp.years ? ' class="highlight-row"' : ''}>
+      <td>${p.year}년</td>
+      <td class="c-brown">${formatKRW(p.principal)}</td>
+      <td class="c-blue">${formatKRW(p.a)}</td>
+      <td>${formatKRW(p.b)}</td>
+      <td class="c-accent">${formatKRW(p.b - p.a)}</td>
+      <td>${formatKRW(p.zero)}</td>
+      <td>${formatKRW(p.zero - p.a)}</td>
+      <td>${formatKRW(p.zero - p.b)}</td>
+    </tr>`).join('');
+}
+function exportYearRows(x) {
+  const R = v => Math.round(v), inp = x.inp;
+  const aT = feePct(inp.feeA * 100), bT = feePct(inp.feeB * 100);
+  const rows = [['연차', '누적 원금', `상품 A 평가액(연 ${aT})`, `상품 B 평가액(연 ${bT})`, '차이(B−A)', '비용 0% 평가액', 'A 비용으로 빠진 돈', 'B 비용으로 빠진 돈']];
+  x.path.filter(p => p.year > 0).forEach(p => rows.push([p.year, R(p.principal), R(p.a), R(p.b), R(p.b) - R(p.a), R(p.zero), R(p.zero) - R(p.a), R(p.zero) - R(p.b)]));
+  return rows;
+}
+document.addEventListener('click', e => {
+  const id = e.target && e.target.id;
+  if (!lastExport || (id !== 'dl-csv' && id !== 'dl-xlsx')) return;
+  const name = 'ETF총보수비교_연차별';
+  if (id === 'dl-csv') TJX.csv(name, exportYearRows(lastExport));
+  else TJX.xlsx(name, [{ name: '연도별', rows: exportYearRows(lastExport), widths: [7, 16, 22, 22, 15, 17, 18, 18] }]);
+});
+
+function renderInsight(inp, path) {
+  const t = document.getElementById('insight-title');
+  const d1 = document.getElementById('insight-desc1'), d2 = document.getElementById('insight-desc2');
+  const last = path[path.length - 1], Y = inp.years;
+  const gapP = Math.abs(inp.feeA - inp.feeB) * 100;
+  if (gapP < 1e-9 || last.principal <= 0) {
+    t.textContent = '비용은 작아 보여도 매년, 전체 평가액에서 빠집니다';
+    d1.innerHTML = '두 상품의 비용을 다르게 넣어 보세요. 연 0.1%p 차이도 기간이 길면 생각보다 큰 금액이 됩니다.';
+    d2.innerHTML = '';
+    return;
+  }
+  const hiFee = Math.max(inp.feeA, inp.feeB), loFee = Math.min(inp.feeA, inp.feeB);
+  const hiName = inp.feeA > inp.feeB ? 'A' : 'B', loName = hiName === 'A' ? 'B' : 'A';
+  const val = (p, n) => n === 'A' ? p.a : p.b;
+  const y1 = path[1], gap1 = Math.abs(y1.b - y1.a);
+  const pick = Y > 10 ? 10 : (Y >= 4 ? Math.floor(Y / 2) : null), pMid = pick ? path[pick] : null;
+  const gapEnd = Math.abs(last.b - last.a);
+  const gHi = growthFactor(inp.rate, hiFee), gLo = growthFactor(inp.rate, loFee);
+  const lumpGap = (1 - Math.pow(gHi / gLo, Y)) * 100;   // 한 번에 넣은 돈 기준 덜 남는 비율
+  const endGapPct = gapEnd / val(last, loName) * 100;
+  const shareOfReturn = inp.rate > 0 ? hiFee / inp.rate * 100 : null;
+
+  t.textContent = `연 ${pct(gapP, 2)}p 차이가, ${Y}년 뒤 ${formatWonCard(gapEnd)}이 되는 이유`;
+  d1.innerHTML = `비용은 '번 돈'이 아니라 <strong>쌓인 돈 전체</strong>에서 해마다 빠집니다. ` + (Y > 1
+    ? `그래서 첫해에는 차이가 <strong>${formatWonCard(gap1)}</strong>밖에 안 되지만, ` +
+      (pMid ? `${pick}년째엔 <strong>${formatWonCard(Math.abs(pMid.b - pMid.a))}</strong>, ` : '') +
+      `${Y}년째엔 <strong>${formatWonCard(gapEnd)}</strong>으로 커집니다. 한 번 빠져나간 비용은 그 뒤로 굴러갈 기회까지 함께 잃기 때문입니다. 넣는 돈이 커질수록, 기간이 길어질수록 차이는 더 가파르게 벌어집니다.`
+    : `첫해 차이는 <strong>${formatWonCard(gap1)}</strong>입니다. 한 번 빠져나간 비용은 그 뒤로 굴러갈 기회까지 함께 잃기 때문에, 기간을 20년·30년으로 늘려 보면 차이가 얼마나 가파르게 커지는지 보실 수 있어요.`);
+  d2.innerHTML = `숫자로 보면 이렇습니다. 상품 ${hiName}는 매년 ${(gHi).toFixed(5)}배, 상품 ${loName}는 ${(gLo).toFixed(5)}배씩 불어납니다. 1년에 ${pct(gapP, 2)}p 차이처럼 보여도, 처음에 한 번에 넣은 돈이라면 ${Y}년 복리로 <strong>${pct(lumpGap, 1)}</strong> 덜 남게 됩니다((${gHi.toFixed(5)} ÷ ${gLo.toFixed(5)})의 ${Y}제곱). ` +
+    `매달 나눠 넣으면 늦게 들어간 돈은 덜 굴러서 그보다는 작은 <strong>${pct(endGapPct, 1)}</strong>입니다.` +
+    (shareOfReturn !== null && hiFee > 0 ? ` 연 수익률 ${ratePct(inp.rate * 100)}를 가정하면, 연 ${feePct(hiFee * 100)} 비용은 해마다 수익의 약 <strong>${pct(shareOfReturn, 0)}</strong>를 떼어 가는 셈입니다.` : '');
+}
+
+// ============== 입력칸 숫자 뒤 단위 ==============
+const unitCanvas = document.createElement('canvas').getContext('2d');
+function placeUnits() {
+  document.querySelectorAll('.input-wrap input[data-unit]').forEach(inp => {
+    let tag = inp.parentNode.querySelector('.input-unit');
+    if (!tag) { tag = document.createElement('span'); tag.className = 'input-unit'; tag.textContent = inp.dataset.unit; inp.after(tag); }
+    const cs = getComputedStyle(inp);
+    if (inp.value === '' || !inp.offsetWidth) { tag.style.visibility = 'hidden'; return; }
+    unitCanvas.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const w = unitCanvas.measureText(inp.value).width;
+    const left = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth) + w + 4 - inp.scrollLeft;
+    tag.style.left = Math.round(left) + 'px';
+    tag.style.fontSize = cs.fontSize;
+    tag.style.visibility = left + tag.offsetWidth < inp.clientWidth - parseFloat(cs.paddingRight) + 8 ? 'visible' : 'hidden';
+  });
+}
+
+// ============== 입력 UI ==============
+function updateDisplays() {
+  const v = id => parseFloat(document.getElementById(id).value);
+  const set = (id, text, empty) => { const el = document.getElementById(id); el.textContent = text; el.classList.toggle('empty', !!empty); };
+  const c = v('initial'), m = v('monthly'), y = v('years'), r = v('rate'), fa = v('feeA'), fb = v('feeB');
+  set('initial-display', isFinite(c) && c > 0 ? formatManwon(c) : '0원', !(c > 0));
+  set('monthly-display', isFinite(m) && m > 0 ? '월 ' + formatManwon(m) : '월 0원', !(m > 0));
+  set('years-display', isFinite(y) ? Math.round(y) + '년' : '-', !isFinite(y));
+  set('rate-display', isFinite(r) ? '연 ' + ratePct(r) : '-', !isFinite(r));
+  set('feeA-display', isFinite(fa) ? '연 ' + feePct(fa) : '-', !isFinite(fa));
+  set('feeB-display', isFinite(fb) ? '연 ' + feePct(fb) : '-', !isFinite(fb));
+  document.querySelectorAll('.chips[data-target]').forEach(box => {
+    const cur = parseFloat(document.getElementById(box.dataset.target).value);
+    box.querySelectorAll('.chip').forEach(ch => ch.classList.toggle('on', Math.abs(parseFloat(ch.dataset.v) - cur) < 1e-9));
+  });
+}
+
+function rerender() { updateDisplays(); placeUnits(); render(); }
+
+function bindEvents() {
+  ['initial', 'monthly', 'years', 'rate', 'feeA', 'feeB'].forEach(id =>
+    document.getElementById(id).addEventListener('input', rerender));
+  document.getElementById('base-on').addEventListener('change', rerender);
+  document.querySelectorAll('.chips[data-target]').forEach(box => box.addEventListener('click', e => {
+    const ch = e.target.closest('.chip'); if (!ch) return;
+    document.getElementById(box.dataset.target).value = ch.dataset.v;
+    rerender();
+  }));
+  document.getElementById('copy-link').addEventListener('click', copyLink);
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { placeUnits(); render(); }, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { placeUnits(); render(); });   // 웹폰트가 늦게 뜨면 폭·차트 글꼴을 다시 맞춘다
+}
+
+// ============== 주소로 값 주고받기 ==============
+// 예: ?initial=0&monthly=50&years=20&rate=7&feeA=0.5&feeB=0.05  (금액은 만원, %는 소수 2자리)
+const URL_RANGE = { initial: [0, 1e7], monthly: [0, 1e6], years: [1, 50], rate: [-5, 20], feeA: [0, 5], feeB: [0, 5] };
+function buildUrl(inp) {
+  const p = new URLSearchParams();
+  p.set('initial', Math.round(inp.initial / 10000));
+  p.set('monthly', Math.round(inp.monthly / 10000));
+  p.set('years', inp.years);
+  p.set('rate', Math.round(inp.rate * 10000) / 100);
+  p.set('feeA', Math.round(inp.feeA * 10000) / 100);
+  p.set('feeB', Math.round(inp.feeB * 10000) / 100);
+  if (!inp.baseOn) p.set('base', 0);
+  return location.href.split('?')[0].split('#')[0] + '?' + p.toString();
+}
+function syncUrl(inp) {
+  try { history.replaceState(null, '', buildUrl(inp)); } catch (e) { /* file:// 등에서는 무시 */ }
+}
+function copyLink() {
+  const btn = document.getElementById('copy-link');
+  const url = buildUrl(readInputs());
+  const done = ok => { btn.textContent = ok ? '복사했습니다' : '복사 실패 — 주소창을 복사하세요'; setTimeout(() => btn.textContent = '링크 복사', 1800); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(() => done(true), () => done(false));
+  else {
+    const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove(); done(ok);
+  }
+}
+function readUrl() {
+  let q; try { q = new URLSearchParams(location.search); } catch (e) { return; }
+  if (!q.toString()) return;
+  Object.keys(URL_RANGE).forEach(k => {
+    if (!q.has(k)) return;
+    const v = parseFloat(q.get(k)), [lo, hi] = URL_RANGE[k];
+    if (!isFinite(v) || v < lo || v > hi) return;
+    document.getElementById(k).value = String(Math.round(v * 100) / 100);
+  });
+  if (q.get('base') === '0') document.getElementById('base-on').checked = false;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  readUrl();
+  bindEvents();
+  rerender();
+});
+</script>
+</body>
+</html>
