@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<script src="https://ttokjaetv.github.io/member-lock.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ETF 총보수 비교 계산기 · 똑재TV</title>
 <meta name="description" content="연 비용 0.5%와 0.05%, 20~30년 적립하면 얼마나 차이 날까요? 두 ETF의 총보수·실부담비용률을 넣으면 연차별 평가액과 비용으로 빠져나간 돈을 원 단위로 계산합니다.">
@@ -492,8 +493,8 @@
     <h3 class="chart-title">연차별 상세 데이터</h3>
     <p class="chart-subtitle" id="table-subtitle">-</p>
     <div class="dl-bar">
-      <button type="button" class="dl-btn" id="dl-csv">CSV 내려받기</button>
-      <button type="button" class="dl-btn" id="dl-xlsx">엑셀(.xlsx) 내려받기</button>
+      <button type="button" class="dl-btn" id="dl-csv" data-member-click="엑셀 내려받기">CSV 내려받기</button>
+      <button type="button" class="dl-btn" id="dl-xlsx" data-member-click="엑셀 내려받기">엑셀(.xlsx) 내려받기</button>
       <span class="dl-note">표에 보이는 연차별 값이 그대로 들어갑니다 (원 단위 숫자 · 세전)</span>
     </div>
     <div class="table-wrap">
