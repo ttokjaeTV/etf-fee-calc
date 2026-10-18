@@ -972,7 +972,7 @@ function renderInsight(inp, path) {
       `${Y}년째엔 <strong>${formatWonCard(gapEnd)}</strong>으로 커집니다. 한 번 빠져나간 비용은 그 뒤로 굴러갈 기회까지 함께 잃기 때문입니다. 넣는 돈이 커질수록, 기간이 길어질수록 차이는 더 가파르게 벌어집니다.`
     : `첫해 차이는 <strong>${formatWonCard(gap1)}</strong>입니다. 한 번 빠져나간 비용은 그 뒤로 굴러갈 기회까지 함께 잃기 때문에, 기간을 20년·30년으로 늘려 보면 차이가 얼마나 가파르게 커지는지 보실 수 있어요.`);
   d2.innerHTML = `숫자로 보면 이렇습니다. 상품 ${hiName}는 매년 ${(gHi).toFixed(5)}배, 상품 ${loName}는 ${(gLo).toFixed(5)}배씩 불어납니다. 1년에 ${pct(gapP, 2)}p 차이처럼 보여도, 처음에 한 번에 넣은 돈이라면 ${Y}년 복리로 <strong>${pct(lumpGap, 1)}</strong> 덜 남게 됩니다((${gHi.toFixed(5)} ÷ ${gLo.toFixed(5)})의 ${Y}제곱). ` +
-    `매달 나눠 넣으면 늦게 들어간 돈은 덜 굴러서 그보다는 작은 <strong>${pct(endGapPct, 1)}</strong>입니다.` +
+    (inp.monthly > 0 ? `매달 나눠 넣으면 늦게 들어간 돈은 덜 굴러서 그보다는 작은 <strong>${pct(endGapPct, 1)}</strong>입니다.` : '') +   // 거치식(월 적립 0)이면 같은 비율이라 생략
     (shareOfReturn !== null && hiFee > 0 ? ` 연 수익률 ${ratePct(inp.rate * 100)}를 가정하면, 연 ${feePct(hiFee * 100)} 비용은 해마다 수익의 약 <strong>${pct(shareOfReturn, 0)}</strong>를 떼어 가는 셈입니다.` : '');
 }
 
