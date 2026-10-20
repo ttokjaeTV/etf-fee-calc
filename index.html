@@ -661,10 +661,14 @@ function formatWonCard(won) {
   if (a < 100000) return (neg ? '-' : '') + Math.round(a).toLocaleString() + '원';
   return (neg ? '-' : '') + formatManwon(Math.round(a / 10000));
 }
-const pct = (v, d = 1) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d) + '%';
+// 소수 자릿수는 toFixed 그대로 두고 정수 부분에만 천 단위 쉼표 (88446.3 → 88,446.3)
+const commaFixed = (v, d) => { const [i, f] = v.toFixed(d).split('.'); return i.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (f ? '.' + f : ''); };
+const pct = (v, d = 1) => commaFixed(Math.round(v * Math.pow(10, d)) / Math.pow(10, d), d) + '%';
 const rateFix = v => { const r2 = Math.round(v * 100) / 100; return Math.abs(r2 * 10 - Math.round(r2 * 10)) < 1e-9 ? r2.toFixed(1) : r2.toFixed(2); };
 const ratePct = v => rateFix(v) + '%';
 const feePct = v => (Math.round(v * 100) / 100).toFixed(2) + '%';   // 비용률은 소수 2자리
+// 공식 대입용 '+ 5.0%' / '− 5.0%': 음수를 넣어도 '(1 + -5.0%)'처럼 부호가 겹치지 않게 연산 기호를 바꾼다
+const opPct = (op, v, fmt = ratePct) => ((op === '+') === !(v < 0) ? '+ ' : '− ') + fmt(Math.abs(v));
 
 // ============== 입력 ==============
 const PERIODS = [10, 20, 30];
@@ -730,7 +734,7 @@ function render() {
   // 연 성장 배수 안내
   const gfA = growthFactor(inp.rate, inp.feeA), gfB = growthFactor(inp.rate, inp.feeB);
   document.getElementById('growth-note').innerHTML =
-    `비용을 빼고 나면 실제로 불어나는 속도는 · 상품 A: (1 + ${ratePct(inp.rate * 100)}) × (1 − ${aT}) → <b>연 ${pct((gfA - 1) * 100, 2)}</b> · 상품 B: (1 + ${ratePct(inp.rate * 100)}) × (1 − ${bT}) → <b>연 ${pct((gfB - 1) * 100, 2)}</b>`;
+    `비용을 빼고 나면 실제로 불어나는 속도는 · 상품 A: (1 ${opPct('+', inp.rate * 100)}) × (1 ${opPct('−', inp.feeA * 100, feePct)}) → <b>연 ${pct((gfA - 1) * 100, 2)}</b> · 상품 B: (1 ${opPct('+', inp.rate * 100)}) × (1 ${opPct('−', inp.feeB * 100, feePct)}) → <b>연 ${pct((gfB - 1) * 100, 2)}</b>`;
 
   // verdict
   document.getElementById('verdict-label').textContent = `RESULT · ${Y}년 뒤`;
@@ -748,8 +752,8 @@ function render() {
   }
 
   // 카드 4개
-  setStat(1, `상품 A 최종 평가액 · 연 ${aT}`, formatWonCard(last.a), `${formatKRWFull(last.a)}<br>원금의 ${(last.a / Math.max(1, last.principal)).toFixed(2)}배`);
-  setStat(2, `상품 B 최종 평가액 · 연 ${bT}`, formatWonCard(last.b), `${formatKRWFull(last.b)}<br>원금의 ${(last.b / Math.max(1, last.principal)).toFixed(2)}배`);
+  setStat(1, `상품 A 최종 평가액 · 연 ${aT}`, formatWonCard(last.a), `${formatKRWFull(last.a)}<br>원금의 ${commaFixed(last.a / Math.max(1, last.principal), 2)}배`);
+  setStat(2, `상품 B 최종 평가액 · 연 ${bT}`, formatWonCard(last.b), `${formatKRWFull(last.b)}<br>원금의 ${commaFixed(last.b / Math.max(1, last.principal), 2)}배`);
   setStat(3, '두 상품 차이 (B − A)', formatWonCard(diff), `${formatKRWFull(diff)}<br>누적 원금 ${formatWonCard(last.principal)} 대비 ${pct(Math.abs(diff) / Math.max(1, last.principal) * 100, 1)}`);
   setStat(4, 'A가 비용으로 잃은 돈 (비용 0% 대비)', formatWonCard(lostA), `비용 0%였다면 ${formatWonCard(last.zero)}<br>B는 ${formatWonCard(lostB)}`);
 
