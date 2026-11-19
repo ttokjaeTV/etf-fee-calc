@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <script src="https://ttokjaetv.github.io/member-lock.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/favicon.ico">
 <title>ETF 총보수 비교 계산기 · 똑재TV</title>
 <meta name="description" content="연 비용 0.5%와 0.05%, 20~30년 적립하면 얼마나 차이 날까요? 두 ETF의 총보수·실부담비용률을 넣으면 연차별 평가액과 비용으로 빠져나간 돈을 원 단위로 계산합니다.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
@@ -170,6 +171,10 @@
   .chart-container.sm { height: 300px; }
 
   /* 표 */
+  .scroll-hint { display: none; margin: 12px 0 -8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-mute); }
+  @media (max-width: 536px) { .scroll-hint.sh-536 { display: block; } }
+  @media (max-width: 864px) { .scroll-hint.sh-864 { display: block; } }
+  .scroll-hint:has(+ .tjl-box) { display: none !important; }
   .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 12px; }
   .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
   .data-table th {
@@ -481,6 +486,7 @@
     <h3 class="chart-title">10년·20년·30년, 기간이 길어지면?</h3>
     <p class="chart-subtitle" id="period-subtitle">-</p>
     <div class="chart-container sm"><canvas id="period-chart"></canvas></div>
+    <p class="scroll-hint sh-536" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
     <div class="table-wrap">
       <table class="data-table scen-table">
         <thead id="period-head"></thead>
@@ -497,6 +503,7 @@
       <button type="button" class="dl-btn" id="dl-xlsx" data-member-click="엑셀 내려받기">엑셀(.xlsx) 내려받기</button>
       <span class="dl-note">표에 보이는 연차별 값이 그대로 들어갑니다 (원 단위 숫자 · 세전)</span>
     </div>
+    <p class="scroll-hint sh-864" aria-hidden="true">← 옆으로 밀어 보세요 →</p>
     <div class="table-wrap">
       <table class="data-table">
         <thead id="year-head"></thead>
